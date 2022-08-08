@@ -1,4 +1,4 @@
-﻿namespace Dz1_restaraunt_async_table_call.Entitys
+﻿namespace Dz1RestarauntAsyncTableCall.Entities
 {
     public class EnumState
     {

@@ -1,7 +1,7 @@
-﻿using Dz1_restaraunt_async_table_call.Entitys;
+﻿using Dz1RestarauntAsyncTableCall.Entities;
 using System.Diagnostics;
 
-namespace Dz1_restaraunt_async_table_call
+namespace Dz1RestarauntAsyncTableCall
 {
     class Program
     {
@@ -23,7 +23,7 @@ namespace Dz1_restaraunt_async_table_call
 
                 string userInput = Console.ReadLine();
 
-                if (int.TryParse(userInput, out int choise) && choise is not (0 or 1 or 2 or 3 or 4))
+                if (int.TryParse(userInput, out int choise) && ( choise < 0 || choise > 4 ))
                 {
                     Console.WriteLine("\tВнимание, некорректный ввод! допускается только целые числа  0  1  2  3  4");
                     continue;

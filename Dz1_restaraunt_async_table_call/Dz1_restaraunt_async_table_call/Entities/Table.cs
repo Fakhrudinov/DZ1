@@ -1,6 +1,6 @@
-﻿using static Dz1_restaraunt_async_table_call.Entitys.EnumState;
+﻿using static Dz1RestarauntAsyncTableCall.Entities.EnumState;
 
-namespace Dz1_restaraunt_async_table_call.Entitys
+namespace Dz1RestarauntAsyncTableCall.Entities
 {
     internal class Table
     {

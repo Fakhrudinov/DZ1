@@ -1,6 +1,8 @@
-﻿using System.Timers;
+﻿using Messaging;
+using Messaging.Interfaces;
+using System.Timers;
 
-namespace Dz1_restaraunt_async_table_call.Entitys
+namespace Dz1RestarauntAsyncTableCall.Entities
 {
     internal class Restaurant
     {
@@ -8,6 +10,8 @@ namespace Dz1_restaraunt_async_table_call.Entitys
         private System.Timers.Timer _timerResetTablesBooking;
 
         private Mutex _mutex = new Mutex();
+
+        private readonly IProducer _producer = new Producer("BookingNotification");
 
         internal Restaurant(int totalTablesInRestaurant)
         {
@@ -33,7 +37,7 @@ namespace Dz1_restaraunt_async_table_call.Entitys
                     if (table.State == EnumState.State.Booked)
                     {
                         bool isSucces = table.SetState(EnumState.State.Free);
-                        await Communicator.InformClientAboutCancelBookingAsync(table, isSucces);
+                        _producer.Send($"УВЕДОМЛЕНИЕ асинхронно! Снятие брони с стола номер {table.Id} = {isSucces}");
                     }                    
                 }
             });
@@ -74,7 +78,11 @@ namespace Dz1_restaraunt_async_table_call.Entitys
             Table table = _tables.FirstOrDefault(t => t.Id == tableNumber);
             Thread.Sleep(3000);
 
-            if (table.State== EnumState.State.Free)
+            if (table is null)
+            {
+                InformManagementAboutNullProblem("Снятие брони синхронно", tableNumber);
+            }
+            else if (table.State== EnumState.State.Free)
             {
                 Console.WriteLine($"Синхронный заказ - Да этот стол #{tableNumber} и так свободен был, что вы нас от работы отвлекаете!");
             }
@@ -98,7 +106,14 @@ namespace Dz1_restaraunt_async_table_call.Entitys
 
                 await Task.Delay(2000);
 
-                await Communicator.InformClientAboutBookingAsync(table);
+                if (table is null)
+                {
+                    _producer.Send($"УВЕДОМЛЕНИЕ асинхронно! Все столы заняты, попробуйте позже.");
+                }
+                else
+                {
+                    _producer.Send($"УВЕДОМЛЕНИЕ асинхронно! Готово, ваш стол={table.Id}");
+                }
             });
             
         }
@@ -121,17 +136,27 @@ namespace Dz1_restaraunt_async_table_call.Entitys
                 Table table = _tables.FirstOrDefault(t => t.Id == tableNumber);
                 await Task.Delay(2000);
 
-                if (table.State == EnumState.State.Free)
+                if (table is null)
                 {
-                    await Communicator.InformClientAboutFailedCanselBookingAsync(tableNumber);                    
+                    InformManagementAboutNullProblem("Снятие брони асинхронно", tableNumber);
+                }
+                else if (table.State == EnumState.State.Free)
+                {
+                    _producer.Send($"УВЕДОМЛЕНИЕ асинхронно! Да этот стол #{tableNumber} и так свободен был, что вы нас от работы отвлекаете!");
                 }
                 else
                 {
                     bool isSucces = table.SetState(EnumState.State.Free);
 
-                    await Communicator.InformClientAboutCancelBookingAsync(table, isSucces);
+                    _producer.Send($"УВЕДОМЛЕНИЕ асинхронно! Снятие брони с стола номер {table.Id} = {isSucces}");
                 }
             });
+        }
+
+        private void InformManagementAboutNullProblem(string action, int tableNumber)
+        {
+            Console.WriteLine($"Внимание! Что-то пошло не так при выполнении '{action}' для стола #{tableNumber}. " +
+                $"Похоже у нас украли стол, так как вернулся null...");
         }
     }
 }
